@@ -1,10 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Card } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation"
 import { SignUpView } from "@/modules/auth/ui/views/sign-up-view";
 
-const Page = () => {
-  console.log("Rendering SignUp Page");
-  return <SignUpView /> 
+const Page = async () => {
+  const session = await auth.api.getSession({
+      headers: await headers(),
+  });
+  
+  if (!!session) {
+      redirect("/");
+  }
+  return <SignUpView />
 };
 
 export default Page;
