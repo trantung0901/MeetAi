@@ -1,16 +1,17 @@
-"use client"; /* eslint-disable @typescript-eslint/no-unused-vars */
+"use client"; 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { z } from "zod";
-import { OctagonAlertIcon } from "lucide-react";
+import { OctagonAlertIcon, Router } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link  from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle } from "@/components/ui/alert";
-import { useRouter } from "next/navigation";
 import {
   Form,
   FormControl,
@@ -20,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 
 const formSchema = z.object({
@@ -29,9 +31,9 @@ const formSchema = z.object({
 
 export const SignInView = () => {
     const router = useRouter();
+    
     const [error, setError] = useState<string | null>(null);
     const [pending, setPending] = useState(false);
-
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -49,6 +51,7 @@ export const SignInView = () => {
             {
                 email: data.email,
                 password: data.password,
+                callbackURL: "/",
             },
             {
                 onSuccess: () => {
@@ -61,8 +64,26 @@ export const SignInView = () => {
                 },
             }
         );
+    };
 
-        
+    const onSocial = (provider: "github" | "google") => {
+        setError(null);
+        setPending(true);
+        authClient.signIn.social(
+            {
+                provider: provider,
+                callbackURL: "/",
+            },
+            {
+                onSuccess: () => {
+                    setPending(false);
+                },
+                onError: ({error}) => {
+                    setPending(false);
+                    setError(error.message);
+                },
+            }
+        );
     };
 
     return (
@@ -133,11 +154,23 @@ export const SignInView = () => {
                                         </span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Button disabled={pending} variant="outline" type="button" className="w-full">
-                                        Google
+                                    <Button 
+                                        disabled={pending}
+                                        onClick={() => onSocial("google")}                                         
+                                        variant="outline" 
+                                        type="button" 
+                                        className="w-full"
+                                    >
+                                        Google <FaGoogle />
                                     </Button>
-                                    <Button disabled={pending} variant="outline" type="button" className="w-full">
-                                        GitHub
+                                    <Button 
+                                        disabled={pending}
+                                        onClick={() => onSocial("github")}
+                                        variant="outline" 
+                                        type="button" 
+                                        className="w-full"
+                                    >
+                                        Github <FaGithub />
                                     </Button>
                                 </div>
                                 <div className="text-center text-sm">
