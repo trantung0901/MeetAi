@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Loader2Icon } from "lucide-react";
 
 interface Props {
