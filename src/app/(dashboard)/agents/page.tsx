@@ -18,8 +18,8 @@ interface Props {
 const Page = async ({ searchParams }: Props) => {
   const filters = await loadSearchParams(searchParams);
   const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    headers: await headers(),
+  });
   
   if (!session) {
     redirect("/sign-in");
