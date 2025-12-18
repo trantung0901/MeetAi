@@ -34,6 +34,7 @@ export const agentsRouter = createTRPCRouter({
                     message: "Agent not found",
                 });
             }
+            return updatedAgent;
         }),
 
     remove: protectedProcedure
