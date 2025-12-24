@@ -12,10 +12,24 @@ import { db } from "@/db";
 import { agents, meetings } from "@/db/schema";
 import { streamVideo } from "@/lib/stream-video";
 
+/**
+ * Verify a webhook payload's signature using the Stream Video SDK.
+ *
+ * @param body - The raw request body text received from the webhook
+ * @param signature - The signature value from the webhook's header to validate
+ * @returns `true` if the signature is valid, `false` otherwise
+ */
 function verifySignatureWithSDK(body: string, signature: string): boolean {
     return streamVideo.verifyWebhook(body, signature);
 }
 
+/**
+ * Handle incoming Stream webhook POSTs: validate headers and signature, parse the payload, process
+ * call events (activate meetings and initiate OpenAI-enabled realtime sessions for `call.session_started`,
+ * end calls for `call.session_participant_left`), and update database records accordingly.
+ *
+ * @returns A JSON response: `{ status: "ok" }` on success, or `{ error: string }` with an appropriate HTTP status for validation or processing errors.
+ */
 export async function POST(req: NextRequest) {
     const signature = req.headers.get("x-signature");
     const apiKey = req.headers.get("x-api-key");
