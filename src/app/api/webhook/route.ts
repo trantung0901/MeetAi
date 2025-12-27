@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+export const runtime = "nodejs";
+
 import { and, eq, not } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -11,25 +12,12 @@ import {
 import { db } from "@/db";
 import { agents, meetings } from "@/db/schema";
 import { streamVideo } from "@/lib/stream-video";
+import { inngest } from "@/inngest/client";
 
-/**
- * Verify a webhook payload's signature using the Stream Video SDK.
- *
- * @param body - The raw request body text received from the webhook
- * @param signature - The signature value from the webhook's header to validate
- * @returns `true` if the signature is valid, `false` otherwise
- */
 function verifySignatureWithSDK(body: string, signature: string): boolean {
     return streamVideo.verifyWebhook(body, signature);
 }
 
-/**
- * Handle incoming Stream webhook POSTs: validate headers and signature, parse the payload, process
- * call events (activate meetings and initiate OpenAI-enabled realtime sessions for `call.session_started`,
- * end calls for `call.session_participant_left`), and update database records accordingly.
- *
- * @returns A JSON response: `{ status: "ok" }` on success, or `{ error: string }` with an appropriate HTTP status for validation or processing errors.
- */
 export async function POST(req: NextRequest) {
     const signature = req.headers.get("x-signature");
     const apiKey = req.headers.get("x-api-key");
@@ -77,9 +65,9 @@ export async function POST(req: NextRequest) {
                 and(
                     eq(meetings.id, meetingId),
                     not(eq(meetings.status, "completed")),
+                    not(eq(meetings.status, "active")),
                     not(eq(meetings.status, "cancelled")),
-                    not(eq(meetings.status, "processing")),
-                    not(eq(meetings.status, "active"))
+                    not(eq(meetings.status, "processing"))
                 )
             );
 
@@ -134,6 +122,63 @@ export async function POST(req: NextRequest) {
 
         const call = streamVideo.video.call("default", meetingId);
         await call.end();
+    } else if (eventType === "call.session_ended") {
+        const event = payload as CallEndedEvent;
+        const meetingId = event.call.custom?.meetingId;
+
+        if (!meetingId) {
+            return NextResponse.json(
+                { error: "Missing meetingId" },
+                { status: 400 }
+            );
+        }
+
+        await db
+            .update(meetings)
+            .set({
+                status: "processing",
+                endedAt: new Date(),
+            })
+            .where(
+                and(eq(meetings.id, meetingId), eq(meetings.status, "active"))
+            );
+    } else if (eventType === "call.transcription_ready") {
+        const event = payload as CallTranscriptionReadyEvent;
+        const meetingId = event.call_cid.split(":")[1];
+
+        const [updatedMeeting] = await db
+            .update(meetings)
+            .set({
+                transcriptUrl: event.call_transcription.url,
+            })
+            .where(eq(meetings.id, meetingId))
+            .returning();
+
+        if (!updatedMeeting) {
+            return NextResponse.json(
+                { error: "Meeting not found" },
+                { status: 404 }
+            );
+        }
+
+        await inngest.send({
+            name: "meetings/processing",
+            data: {
+                meetingId: updatedMeeting.id,
+                transcriptUrl: updatedMeeting.transcriptUrl,
+            },
+        });
+    } else if (eventType === "call.recording_ready") {
+        const event = payload as CallRecordingReadyEvent;
+        const meetingId = event.call_cid.split(":")[1];
+
+        await db
+            .update(meetings)
+            .set({
+                recordingUrl: event.call_recording.url,
+            })
+            .where(eq(meetings.id, meetingId))
+            .returning();
     }
 
     return NextResponse.json({ status: "ok" });
