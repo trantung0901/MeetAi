@@ -10,6 +10,8 @@ import { ErrorBoundary } from "react-error-boundary";
 import { loadSearchParams } from "@/modules/meetings/params";
 import type { SearchParams } from "nuqs/server";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   searchParams: Promise<SearchParams>;
 }

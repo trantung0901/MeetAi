@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { db } from "@/db";
-import { agents } from "@/db/schema";
+import { agents, meetings } from "@/db/schema";
 import { and, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm";
-import { createTRPCRouter, premiumProcedure, protectedProcedure } from "@/trpc/init";
+import {
+    createTRPCRouter,
+    premiumProcedure,
+    protectedProcedure,
+} from "@/trpc/init";
 import { agentsInsertSchema, agentsUpdateSchema } from "../schema";
 import z from "zod";
 import {
@@ -63,7 +67,10 @@ export const agentsRouter = createTRPCRouter({
         .query(async ({ input, ctx }) => {
             const [existingAgent] = await db
                 .select({
-                    meetingCount: sql<number>`5`,
+                    meetingCount: db.$count(
+                        meetings,
+                        eq(agents.id, meetings.agentId)
+                    ),
                     ...getTableColumns(agents),
                 })
                 .from(agents)
@@ -100,7 +107,10 @@ export const agentsRouter = createTRPCRouter({
             const { search, page, pageSize } = input;
             const data = await db
                 .select({
-                    meetingCount: sql<number>`5`,
+                    meetingCount: db.$count(
+                        meetings,
+                        eq(agents.id, meetings.agentId)
+                    ),
                     ...getTableColumns(agents),
                 })
                 .from(agents)
