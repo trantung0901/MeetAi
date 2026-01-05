@@ -23,7 +23,6 @@ import { ChevronDownIcon } from "lucide-react";
 import { CreditCardIcon } from "lucide-react";
 import { LogOutIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import from from './../../../../../.next/server/app/_not-found/page';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { on } from "events";
@@ -73,7 +72,7 @@ export const DashboardUserButton = () => {
                     <DrawerFooter>
                         <Button
                             variant="outline"
-                            onClick={() => {}}
+                            onClick={() => authClient.customer.portal()}
                         >
                             <CreditCardIcon className="side-4 text-black"/>
                             Billing
@@ -116,6 +115,7 @@ export const DashboardUserButton = () => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
+                    onClick={() => authClient.customer.portal()}
                     className="cursor-pointer flex items-center justify-between"
                 >
                     Billing

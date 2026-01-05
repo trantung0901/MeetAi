@@ -11,7 +11,7 @@ import {
     inArray,
     sql,
 } from "drizzle-orm";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { createTRPCRouter, premiumProcedure, protectedProcedure } from "@/trpc/init";
 import z from "zod";
 import {
     DEFAULT_PAGE,
@@ -263,7 +263,7 @@ export const meetingsRouter = createTRPCRouter({
             };
         }),
 
-    create: protectedProcedure
+    create: premiumProcedure("meetings")
         .input(meetingsInsertSchema)
         .mutation(async ({ input, ctx }) => {
             const [createdMeeting] = await db
