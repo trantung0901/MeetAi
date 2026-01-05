@@ -9,6 +9,9 @@ import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { UpgradeView, UpgradeViewError, UpgradeViewLoading } from '@/modules/premium/ui/view/upgrade-view';
 
+export const dynamic = "force-dynamic";
+
+
 const Page = async () => {
 
     const session = await auth.api.getSession({

@@ -4,6 +4,9 @@ import { HomeView } from "@/modules/home/ui/views/home-view";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
+
 const Page = async () => {
 
   const session = await auth.api.getSession({
