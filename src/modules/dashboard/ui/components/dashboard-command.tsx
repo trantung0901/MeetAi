@@ -4,8 +4,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { GeneratedAvatar } from "@/components/generated-avatar";
-import { useRouter } from "next/router";
-import { meetings } from './../../../../db/schema';
+import { useRouter } from "next/navigation";
 import { CommandEmpty } from "cmdk";
 
 interface Props {
